@@ -3,26 +3,11 @@ require_relative "../lib/string_builder"
 # ──────────────────────────────────────────────────────────────────
 # SQL Query Builder
 #
-# StringBuilder doesn't know what SQL is. It doesn't need to.
-# You define a concat handler that understands your domain,
-# and the method chain becomes your query language.
+# A concat handler that renders SQL syntax from method chains.
 # ──────────────────────────────────────────────────────────────────
 
 module SQL
-  # Custom concat handler that renders SQL syntax from a StringBuilder buffer.
-  #
-  # Convention:
-  #   - Bare methods become SQL keywords (uppercased):  .from -> "FROM"
-  #   - Methods with string args become clause values:   .from("users") -> "FROM users"
-  #   - Methods with symbol args become unquoted refs:   .columns(:name, :email) -> "name, email"
-  #   - Methods with hash args become conditions:        .where(age: 21) -> "WHERE age = 21"
-  #
   class Concat
-    # SQL keywords. Some Ruby/Enumerable methods shadow method_missing
-    # (select, group_by, sort, min, max, count, sum, find, reject, detect,
-    #  include?, inject, reduce, zip, drop, take, first, compact, etc.)
-    # Inside wrap blocks, use aliases: "columns" for SELECT, "grouped_by"
-    # for GROUP BY, "sorted_by" for ORDER BY, "counted" for COUNT.
     KEYWORDS = %w[select from where join on and or order_by group_by having limit offset
                   inner_join left_join right_join insert into values update set delete
                   create table drop alter add column index distinct count sum avg min max
@@ -81,9 +66,6 @@ module SQL
     end
   end
 
-  # Build a query. Uses .("SELECT") via call syntax to avoid the
-  # Enumerable#select collision — StringBuilder includes Enumerable,
-  # so .select is already defined. The .() syntax injects a raw token.
   def self.query(&block)
     sb = StringBuilder.new { |buf| Concat.call(buf) }
     block ? sb.wrap(&block).to_s : sb
@@ -91,23 +73,13 @@ module SQL
 end
 
 # ──────────────────────────────────────────────────────────────────
-# Watch what happens. Ruby method chains become SQL queries.
-#
-# NOTE: StringBuilder includes Enumerable, so .select() is already
-# defined. We use .("SELECT") to inject the keyword as a raw token.
-# This is exactly the kind of collision that kube_ctl solves with
-# monkey-patches — here we show the raw workaround.
-# ──────────────────────────────────────────────────────────────────
 
-# Simple select
 puts SQL.query { columns(:name, :email).from("users") }
 # => SELECT name, email FROM 'users'
 
-# Where clause with hash conditions
 puts SQL.query { columns(:name).from("users").where(active: true, role: "admin") }
 # => SELECT name FROM 'users' WHERE active = TRUE AND role = 'admin'
 
-# Joins
 puts SQL.query {
   columns(:u_name, :o_total)
     .from("users u")
@@ -116,7 +88,6 @@ puts SQL.query {
 }
 # => SELECT u_name, o_total FROM 'users u' INNER JOIN 'orders o' ON 'u.id = o.user_id'
 
-# Aggregation with group by (uses aliases to dodge Enumerable collisions)
 puts SQL.query {
   columns(:department)
     .counted(:id)
@@ -127,19 +98,15 @@ puts SQL.query {
 }
 # => SELECT department COUNT 'id' FROM 'employees' GROUP BY department HAVING 'count > 5' ORDER BY department
 
-# Insert
 puts SQL.query { insert.into("users").values("alice", "alice@example.com", 28) }
 # => INSERT INTO 'users' VALUES 'alice', 'alice@example.com', 28
 
-# Update
 puts SQL.query { update("users").set(name: "bob", email: "bob@example.com").where(id: 1) }
 # => UPDATE 'users' SET name = 'bob' AND email = 'bob@example.com' WHERE id = 1
 
-# Delete
 puts SQL.query { delete.from("sessions").where(expired: true) }
 # => DELETE FROM 'sessions' WHERE expired = TRUE
 
-# Subquery with limit/offset
 puts SQL.query {
   columns(:id, :name)
     .from("products")
@@ -150,7 +117,6 @@ puts SQL.query {
 }
 # => SELECT id, name FROM 'products' WHERE category = 'electronics' ORDER BY price LIMIT 10 OFFSET 20
 
-# Left join
 puts SQL.query {
   columns(:u_name, :p_avatar)
     .from("users u")
@@ -160,14 +126,5 @@ puts SQL.query {
 }
 # => SELECT u_name, p_avatar FROM 'users u' LEFT JOIN 'profiles p' ON 'u.id = p.user_id' WHERE u_active = TRUE
 
-# Distinct
 puts SQL.query { columns.distinct(:status).from("orders") }
 # => SELECT DISTINCT status FROM 'orders'
-
-puts ""
-
-# ──────────────────────────────────────────────────────────────────
-# The point: StringBuilder gave us a SQL DSL in ~70 lines of
-# concat logic. No parser. No AST. No grammar. Just method chains
-# mapped to domain-specific string rendering.
-# ──────────────────────────────────────────────────────────────────

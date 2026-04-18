@@ -8,7 +8,7 @@ gem install string_builder
 
 ---
 
-### CLI commands
+### Git
 
 ```ruby
 Git.commit.m("fix: null pointer in parser")
@@ -23,6 +23,12 @@ git log --oneline --graph -n 20
 git rebase -i HEAD~5
 ```
 
+[See how this works &rarr;](examples/02-git.rb)
+
+---
+
+### Docker
+
 ```ruby
 Docker.run.d(true).name("web").p("8080:80").("nginx:latest")
 Docker.build.t("myapp:latest").no_cache(true).(".")
@@ -34,20 +40,49 @@ docker build -t myapp:latest --no-cache .
 docker compose up -d --build --remove-orphans
 ```
 
+[See how this works &rarr;](examples/03-docker.rb)
+
+---
+
+### Terraform
+
 ```ruby
 Terraform.plan.var("region=us-east-1").var_file("prod.tfvars").out("plan.out")
 Terraform.apply.auto_approve(true).("plan.out")
+Terraform.destroy.auto_approve(true).target("aws_instance.web")
+Terraform.state.mv.("aws_instance.old").("aws_instance.new")
+Terraform.import.("aws_instance.web").("i-1234567890abcdef0")
 ```
 ```
 terraform plan --var region=us-east-1 --var-file prod.tfvars --out plan.out
 terraform apply --auto-approve plan.out
+terraform destroy --auto-approve --target aws_instance.web
+terraform state mv aws_instance.old aws_instance.new
+terraform import aws_instance.web i-1234567890abcdef0
 ```
 
-[See how this works &rarr;](examples/cli_builder.rb)
+[See how this works &rarr;](examples/04-terraform.rb)
 
 ---
 
-### SQL queries
+### AWS
+
+```ruby
+AWS.s3.cp.("s3://my-bucket/data.csv").(".").recursive(true)
+AWS.lambda.invoke.function_name("my-function").payload('{"key":"value"}').("output.json")
+AWS.cloudformation.deploy.template_file("template.yaml").stack_name("my-stack")
+```
+```
+aws s3 cp s3://my-bucket/data.csv . --recursive
+aws lambda invoke --function-name my-function --payload {"key":"value"} output.json
+aws cloudformation deploy --template-file template.yaml --stack-name my-stack
+```
+
+[See how this works &rarr;](examples/05-aws.rb)
+
+---
+
+### SQL
 
 ```ruby
 SQL.query { columns(:name, :email).from("users").where(active: true) }
@@ -68,23 +103,21 @@ INSERT INTO 'users' VALUES 'alice', 'alice@example.com', 28
 SELECT id, name FROM 'products' WHERE category = 'electronics' ORDER BY price LIMIT 10
 ```
 
-[See how this works &rarr;](examples/query_builder.rb)
+[See how this works &rarr;](examples/09-sql.rb)
 
 ---
 
-### HTML markup
+### HTML
 
 ```ruby
 HTML.tag.h1("Hello, World!")
 HTML.tag.a("Click here", href: "/about", class: "link")
-HTML.tag.img(src: "/logo.png", alt: "Logo")
 HTML.build { div(class: "container") / h1("Welcome back.") }
 HTML.build { nav(class: "sidebar") / ul / li("Dashboard") }
 ```
 ```html
 <h1>Hello, World!</h1>
 <a href="/about" class="link">Click here</a>
-<img src="/logo.png" alt="Logo">
 <div class="container">
   <h1>Welcome back.</h1>
 </div>
@@ -95,13 +128,13 @@ HTML.build { nav(class: "sidebar") / ul / li("Dashboard") }
 </nav>
 ```
 
-[See how this works &rarr;](examples/html_builder.rb)
+[See how this works &rarr;](examples/10-html.rb)
 
 ---
 
 ### Same chain, different output
 
-One buffer. Swap the concat handler. Get a completely different string.
+One buffer. Swap the handler.
 
 ```ruby
 sb = StringBuilder.new.get.users.page(1).limit(25)
@@ -113,13 +146,7 @@ sb = StringBuilder.new.get.users.page(1).limit(25)
 | URL      | `/get/users?page=1&limit=25` |
 | JSONPath | `$.get.users.page[1].limit[25]` |
 
-```ruby
-sb.data.users(0).name                    # $.data.users[0].name
-sb.api.v1.search.page(1).limit(25)       # /api/v1/search?page=1&limit=25
-sb.wrap { div(:card) / ul(:list) / li }  # div.card > ul.list > li
-```
-
-[See how this works &rarr;](examples/custom_concat.rb)
+[See how this works &rarr;](examples/16-multi-render.rb)
 
 ---
 
@@ -140,7 +167,56 @@ RAILS_ENV=production
 PORT=3000
 ```
 
-[See how this works &rarr;](examples/custom_concat.rb)
+[See how this works &rarr;](examples/14-env.rb)
+
+---
+
+### CSS selectors
+
+```ruby
+CSS.wrap { div(:container) / ul(:list) / li(:active) / a }
+CSS.wrap { body / main("content") / section(:hero) / h1 }
+```
+```css
+div.container > ul.list > li.active > a
+body > main#content > section.hero > h1
+```
+
+[See how this works &rarr;](examples/13-css.rb)
+
+---
+
+### JSONPath
+
+```ruby
+JP.data.users(0).name
+JP.store.book(2).author
+JP.response.items(0).metadata.labels
+```
+```
+$.data.users[0].name
+$.store.book[2].author
+$.response.items[0].metadata.labels
+```
+
+[See how this works &rarr;](examples/11-jsonpath.rb)
+
+---
+
+### URLs
+
+```ruby
+URL.api.v2.users
+URL.api.v1.search.page(1).limit(25)
+URL.api.v3.repos.("octocat/hello-world").commits.per_page(10)
+```
+```
+/api/v2/users
+/api/v1/search?page=1&limit=25
+/api/v3/repos/octocat/hello-world/commits?per_page=10
+```
+
+[See how this works &rarr;](examples/12-url.rb)
 
 ---
 
@@ -158,10 +234,10 @@ test:
 	go test ./... -v -race
 ```
 
-[See how this works &rarr;](examples/custom_concat.rb)
+[See how this works &rarr;](examples/15-makefile.rb)
 
 ---
 
 The library is 113 lines. Every example above is a different concat handler -- a single `.call(buffer)` method that decides how tokens become strings. The chain is data. The handler is interpretation.
 
-[Start with the basics &rarr;](examples/basic.rb)
+[Start with the basics &rarr;](examples/01-basic.rb)
