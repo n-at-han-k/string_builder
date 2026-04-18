@@ -238,6 +238,63 @@ test:
 
 ---
 
+---
+
+### Built with StringBuilder
+
+#### [kube_ctl](https://github.com/general-intelligence-systems/kube_ctl) -- kubectl & helm as Ruby DSLs
+
+```ruby
+Kube.ctl { create.namespace.my-app }
+Kube.ctl { apply.f './k8s/deployment.yaml' }
+Kube.ctl { get.pods.o(:wide) }
+Kube.ctl { logs.f(true).deployment/web.c('my-app') }
+Kube.ctl { scale.deployment/web.replicas(5) }
+Kube.ctl { set.image.deployment/web.('my-app=registry.example.com/my-app:v2') }
+Kube.ctl { rollout.undo.deployment/web.to_revision(3) }
+Kube.ctl { exec.i(true).t(true).web.c('my-app').('-- /bin/sh') }
+```
+```
+kubectl create namespace my-app
+kubectl apply -f ./k8s/deployment.yaml
+kubectl get pods -o wide
+kubectl logs -f deployment/web -c my-app
+kubectl scale deployment/web --replicas=5
+kubectl set image deployment/web my-app=registry.example.com/my-app:v2
+kubectl rollout undo deployment/web --to-revision=3
+kubectl exec -i -t web -c my-app -- /bin/sh
+```
+
+```ruby
+Kube.helm { repo.add.("bitnami").("https://charts.bitnami.com/bitnami") }
+Kube.helm {
+  install.my_nginx.("bitnami/nginx")
+    .f("values.yaml")
+    .set("image.tag=1.25.0")
+    .namespace("web")
+    .create_namespace(true)
+    .wait(true)
+    .timeout("5m0s")
+}
+Kube.helm {
+  upgrade.install(true).my_nginx.("bitnami/nginx")
+    .reuse_values(true)
+    .set("image.tag=1.26.0")
+    .namespace("web")
+}
+```
+```
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install my-nginx bitnami/nginx -f values.yaml --set image.tag=1.25.0 --namespace=web --create-namespace --wait --timeout=5m0s
+helm upgrade --install my-nginx bitnami/nginx --reuse-values --set image.tag=1.26.0 --namespace=web
+```
+
+A full 31-step deployment walkthrough and 10-step helm workflow. `gem install kube_kubectl`
+
+[kubectl examples &rarr;](https://github.com/general-intelligence-systems/kube_ctl/blob/main/examples/kubectl_deploy_app.rb) &#183; [helm examples &rarr;](https://github.com/general-intelligence-systems/kube_ctl/blob/main/examples/helm_install_chart.rb)
+
+---
+
 The library is 113 lines. Every example above is a different concat handler -- a single `.call(buffer)` method that decides how tokens become strings. The chain is data. The handler is interpretation.
 
 [Start with the basics &rarr;](examples/01-basic.rb)
