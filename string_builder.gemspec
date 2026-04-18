@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "Method chain to string builder"
   spec.description = "Captures Ruby method chains into a buffer and serializes them to strings. Useful for building DSLs, query builders, and command builders."
-  spec.homepage = "https://github.com/general-intelligence-systems/string_builder"
+  spec.homepage = "https://github.com/n-at-han-k/string_builder"
   spec.license = "Apache-2.0"
   spec.required_ruby_version = ">= 3.2.0"
 
