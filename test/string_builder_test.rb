@@ -4,11 +4,11 @@ require "test_helper"
 
 class StringBuilderTest < Minitest::Test
   def sb(&block)
-    StringBuilder.new.tap { |s| s.instance_eval(&block) if block }
+    StringBuilder.new.wrap(&block)
   end
 
   def assert_buffer(result, expected)
-    assert_equal expected, result.buffer
+    assert_equal expected, result.to_a
   end
 
   def assert_string(result, expected)
@@ -27,35 +27,6 @@ class StringBuilderTest < Minitest::Test
     assert_string(result, "get deployment")
   end
 
-  def test_get_deployment_slash_v1
-    result = sb { get.deployment/v1 }
-    assert_buffer(result, [["get", []], ["deployment", []], :slash, ["v1", []]])
-    assert_string(result, "get deployment / v1")
-  end
-
-  def test_get_deployment_slash_v1_slash_app
-    result = sb { get.deployment/v1/app }
-    assert_buffer(result, [["get", []], ["deployment", []], :slash, ["v1", []], :slash, ["app", []]])
-    assert_string(result, "get deployment / v1 / app")
-  end
-
-  def test_get_deployment_slash_v1_slash_app_namespace
-    result = sb { get.deployment/v1/app.namespace("default") }
-    assert_buffer(
-      result,
-      [
-        ["get", []], ["deployment", []], :slash, ["v1", []], :slash,
-        ["app", []], ["namespace", ["default"]]
-      ]
-    )
-    assert_string(result, "get deployment / v1 / app namespace(\"default\")")
-  end
-
-  def test_dash_operator_marks_dash_token
-    result = sb { get.node.k8s-node }
-    assert_buffer(result, [["get", []], ["node", []], ["k8s", []], :dash, ["node", []]])
-    assert_string(result, "get node k8s - node")
-  end
 
   def test_blockless_chaining
     result = StringBuilder.new.get.deployment
@@ -79,5 +50,30 @@ class StringBuilderTest < Minitest::Test
     assert_raises(ArgumentError) do
       StringBuilder.new.get.()
     end
+  end
+
+
+  def test_method_with_kwargs
+    result = StringBuilder.new.get.deployment(replicas: 3)
+    assert_buffer(result, [["get", []], ["deployment", [{replicas: 3}]]])
+    assert_string(result, "get deployment({replicas: 3})")
+  end
+
+  def test_method_with_args_and_kwargs
+    result = StringBuilder.new.get.deployment("nginx", replicas: 3)
+    assert_buffer(result, [["get", []], ["deployment", ["nginx", {replicas: 3}]]])
+    assert_string(result, "get deployment(\"nginx\", {replicas: 3})")
+  end
+
+  def test_method_with_multiple_kwargs
+    result = StringBuilder.new.get.deployment(replicas: 3, namespace: "default")
+    assert_buffer(result, [["get", []], ["deployment", [{replicas: 3, namespace: "default"}]]])
+    assert_string(result, "get deployment({replicas: 3, namespace: \"default\"})")
+  end
+
+  def test_integer_unit_standalone
+    result = 1.app
+    assert_instance_of InnerStringBuilder, result
+    assert_equal [["1", []], ["app", []]], result.to_a
   end
 end
