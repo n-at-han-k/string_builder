@@ -23,12 +23,12 @@ class StringBuilderTest < Minitest::Test
 
   def test_get_deployment_slash_v1
     result = sb { get.deployment/v1 }
-    assert_buffer(result, [["get", []], ["deployment", []], ["v1", []], :slash])
+    assert_buffer(result, [["get", []], ["deployment", []], :slash, ["v1", []]])
   end
 
   def test_get_deployment_slash_v1_slash_app
     result = sb { get.deployment/v1/app }
-    assert_buffer(result, [["get", []], ["deployment", []], ["v1", []], :slash, ["app", []], :slash])
+    assert_buffer(result, [["get", []], ["deployment", []], :slash, ["v1", []], :slash, ["app", []]])
   end
 
   def test_get_deployment_slash_v1_slash_app_namespace
@@ -36,15 +36,15 @@ class StringBuilderTest < Minitest::Test
     assert_buffer(
       result,
       [
-        ["get", []], ["deployment", []], ["v1", []], :slash,
-        ["app", []], ["namespace", ["default"]], :slash
+        ["get", []], ["deployment", []], :slash, ["v1", []], :slash,
+        ["app", []], ["namespace", ["default"]]
       ]
     )
   end
 
   def test_dash_operator_marks_dash_token
     result = sb { get.node.k8s-node }
-    assert_buffer(result, [["get", []], ["node", []], ["k8s", []], ["node", []], :dash])
+    assert_buffer(result, [["get", []], ["node", []], ["k8s", []], :dash, ["node", []]])
   end
 
   def test_blockless_chaining

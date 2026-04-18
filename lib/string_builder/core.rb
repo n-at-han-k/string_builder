@@ -21,8 +21,31 @@ class StringBuilder
 
   attr_reader :buffer
 
-  def initialize
+  DEFAULT_SERIALIZER = proc { |buffer|
+    buffer.map { |entry|
+      case entry
+      when :slash then "/"
+      when :dash then "-"
+      else
+        name, args = entry
+        args.empty? ? name : "#{name}(#{args.map(&:inspect).join(', ')})"
+      end
+    }.join(".")
+  }
+
+  def initialize(serializer: DEFAULT_SERIALIZER)
     @buffer = []
+    @serializer = serializer
+    @operator_pos = nil
+  end
+
+  def to_s
+    @serializer.call(@buffer)
+  end
+
+  def wrap(&block)
+    instance_eval(&block)
+    self
   end
 
   def each
@@ -47,7 +70,9 @@ class StringBuilder
 
   def /(_other)
     tap do
-      @buffer << :slash
+      insert_pos = @operator_pos || (@buffer.length - 1)
+      @buffer.insert(insert_pos, :slash)
+      @operator_pos = @buffer.length
     end
   end
 
@@ -56,28 +81,19 @@ class StringBuilder
       case other
       when MethodCallToken
         @buffer << [other.base.to_s, []]
-        @buffer << :dash
+        insert_pos = @operator_pos || (@buffer.length - 1)
+        @buffer.insert(insert_pos, :dash)
         @buffer << [other.name.to_s, other.args]
+        @operator_pos = @buffer.length
       else
-        @buffer << [other.to_s, []] unless other.is_a?(StringBuilder)
-        @buffer << :dash
+        unless other.is_a?(StringBuilder)
+          @buffer << [other.to_s, []]
+        end
+        insert_pos = @operator_pos || (@buffer.length - 1)
+        @buffer.insert(insert_pos, :dash)
+        @operator_pos = @buffer.length
       end
     end
   end
 end
 
-class ::Integer
-  def method_missing(name, *args, &_block)
-    return super unless name.to_s.match?(/\A[a-z_][a-z0-9_]*\z/)
-
-    MethodCallToken.new(self, name, args)
-  end
-
-  def respond_to_missing?(name, include_private = false)
-    name.to_s.match?(/\A[a-z_][a-z0-9_]*\z/) || super
-  end
-
-  def to_str
-    to_s
-  end
-end
