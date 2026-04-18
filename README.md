@@ -6,6 +6,22 @@ Ruby method chains &rarr; any string format. 113 lines. Zero dependencies.
 gem install string_builder
 ```
 
+## Contents
+
+- [Git](#git)
+- [Docker](#docker)
+- [Terraform](#terraform)
+- [AWS](#aws)
+- [SQL](#sql)
+- [HTML](#html)
+- [Same chain, different output](#same-chain-different-output)
+- [.env files](#env-files)
+- [CSS selectors](#css-selectors)
+- [JSONPath](#jsonpath)
+- [URLs](#urls)
+- [Makefile targets](#makefile-targets)
+- [Built with StringBuilder](#built-with-stringbuilder)
+
 ---
 
 ### Git
