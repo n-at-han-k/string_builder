@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative "string_builder/version"
-require_relative "string_builder/concat/default"
+require_relative 'string_builder/version'
+require_relative 'string_builder/concat/default'
 
 class StringBuilder
   include Enumerable
@@ -55,11 +55,11 @@ class StringBuilder
 
   def method_missing(name, *args, **kwargs, &_block)
     tap do
-      if kwargs.empty?
-        @buffer << [name.to_s, args]
-      else
-        @buffer << [name.to_s, [*args, kwargs]]
-      end
+      @buffer << if kwargs.empty?
+                   [name.to_s, args]
+                 else
+                   [name.to_s, [*args, kwargs]]
+                 end
     end
   end
 end
@@ -104,9 +104,7 @@ end
 # a standalone builder that the operator receives as a distinct `other` object
 # — no different from how any other right-hand operand works.
 class ::Integer
-  def respond_to_missing?(...) = true
-
   def method_missing(*)
-    InnerStringBuilder.new.call(self.to_s).send(*)
+    InnerStringBuilder.new.call(to_s).send(*)
   end
 end
