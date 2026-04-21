@@ -104,7 +104,8 @@ end
 # a standalone builder that the operator receives as a distinct `other` object
 # — no different from how any other right-hand operand works.
 class ::Integer
-  def method_missing(*)
-    InnerStringBuilder.new.call(to_s).send(*)
+  def method_missing(name, *)
+    super if name.start_with?("to_")
+    InnerStringBuilder.new.call(to_s).send(name, *)
   end
 end
