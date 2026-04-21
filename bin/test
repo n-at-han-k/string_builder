@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+ENV["MONKEY_PATCH"] = "1"
+
 $LOAD_PATH.unshift File.expand_path("../test", __dir__)
 
 require "bundler/setup"

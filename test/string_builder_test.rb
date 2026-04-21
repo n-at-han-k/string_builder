@@ -76,4 +76,44 @@ class StringBuilderTest < Minitest::Test
     assert_instance_of InnerStringBuilder, result
     assert_equal [["1", []], ["app", []]], result.to_a
   end
+
+  # Coercion methods (to_int, to_str, to_ary, etc.) must not be captured
+  # by method_missing. If they are, Ruby's implicit type coercion will
+  # receive a StringBuilder back instead of raising NoMethodError/TypeError,
+  # causing errors like "can't convert InnerStringBuilder to Integer".
+  def test_does_not_respond_to_coercion_methods
+    builder = StringBuilder.new.foo
+    refute builder.respond_to?(:to_int)
+    refute builder.respond_to?(:to_str)
+    refute builder.respond_to?(:to_ary)
+    refute builder.respond_to?(:to_hash)
+  end
+
+  def test_coercion_methods_raise_on_string_builder
+    builder = StringBuilder.new.foo
+    assert_raises(NoMethodError) { builder.to_int }
+    assert_raises(NoMethodError) { builder.to_str }
+    assert_raises(NoMethodError) { builder.to_ary }
+    assert_raises(NoMethodError) { builder.to_hash }
+  end
+
+  def test_coercion_methods_raise_on_inner_string_builder
+    builder = InnerStringBuilder.new.foo
+    assert_raises(NoMethodError) { builder.to_int }
+    assert_raises(NoMethodError) { builder.to_str }
+    assert_raises(NoMethodError) { builder.to_ary }
+    assert_raises(NoMethodError) { builder.to_hash }
+  end
+
+  def test_to_s_still_works
+    # to_s is explicitly defined, so it must not be blocked
+    result = StringBuilder.new.get.deployment
+    assert_equal "get deployment", result.to_s
+  end
+
+  def test_builder_not_coercible_to_integer_in_array
+    builder = StringBuilder.new.foo
+    # Simulates what Rack does: [status, headers, body] where status must be Integer
+    assert_raises(TypeError) { Integer(builder) }
+  end
 end

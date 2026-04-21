@@ -117,9 +117,14 @@ end
 # then forwards the method (e.g. `px`) so it chains naturally. The result is
 # a standalone builder that the operator receives as a distinct `other` object
 # — no different from how any other right-hand operand works.
-class ::Integer
-  def method_missing(name, *)
-    super if name.start_with?("to_")
-    InnerStringBuilder.new.call(to_s).send(name, *)
+if ENV["MONKEY_PATCH"].to_i == 1
+  class ::Integer
+    def method_missing(name, *)
+      if name.start_with?("to_")
+        super
+      else
+        InnerStringBuilder.new.call(to_s).send(name, *)
+      end
+    end
   end
 end

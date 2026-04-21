@@ -4,13 +4,19 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     utils.url = "github:numtide/flake-utils";
+    nixpkgs-ruby.url = "github:bobvanderlinden/nixpkgs-ruby";
+    nixpkgs-ruby.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, utils }:
+  outputs = { self, nixpkgs, utils, nixpkgs-ruby }:
     utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        ruby = pkgs.ruby_3_4;
+        pkgs = import nixpkgs {
+          system = "${system}";
+          overlays = [
+            nixpkgs-ruby.overlays.default
+          ];
+        };
 
         kubectl = pkgs.buildGoModule rec {
           pname = "kubectl";
@@ -63,7 +69,11 @@
 
         devShells.default = pkgs.mkShell {
           nativeBuildInputs = [ pkgs.pkg-config ];
-          buildInputs = [ ruby pkgs.libyaml pkgs.openssl ];
+          buildInputs = with pkgs; [
+            pkgs."ruby-4.0.2"
+            libyaml
+            openssl
+          ];
 
           shellHook = ''
             export GEM_HOME="$PWD/.gem"
