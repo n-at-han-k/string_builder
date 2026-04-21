@@ -51,15 +51,29 @@ class StringBuilder
 
   private
 
-  def respond_to_missing?(*) = true
+  # Don't claim that you respond to any extra bullshit.
+  # It just fucks everything up in regard to type checking.
+  # Other classes by use #respond_to?() to check the type.
+  #
+  #def respond_to_missing?(name, *)
+  #  if name.start_with?("to_")
+  #    super
+  #  else
+  #    true
+  #  end
+  #end
 
   def method_missing(name, *args, **kwargs, &_block)
-    tap do
-      @buffer << if kwargs.empty?
-                   [name.to_s, args]
-                 else
-                   [name.to_s, [*args, kwargs]]
-                 end
+    if name.start_with?("to_")
+      super
+    else
+      tap do
+        if kwargs.empty?
+          @buffer << [name.to_s, args]
+        else
+          @buffer << [name.to_s, [*args, kwargs]]
+        end
+      end
     end
   end
 end
