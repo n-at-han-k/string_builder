@@ -1,5 +1,7 @@
 # string_builder
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/n-at-han-k/string_builder)
+
 Ruby method chains to any string format. 113 lines. Zero dependencies.
 
 ## Usage
