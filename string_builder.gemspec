@@ -16,6 +16,7 @@ Gem::Specification.new do |spec|
 
   spec.metadata["homepage_uri"] = spec.homepage
   spec.metadata["source_code_uri"] = spec.homepage
+  spec.metadata["documentation_uri"] = "https://n-at-han-k.github.io/string_builder/"
   spec.metadata["rubygems_mfa_required"] = "true"
 
   spec.files = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
