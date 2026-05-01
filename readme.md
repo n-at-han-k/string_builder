@@ -2,10 +2,6 @@
 
 Ruby method chains to any string format. 113 lines. Zero dependencies.
 
-```
-gem install string_builder
-```
-
 ## Usage
 
 Please see the [project documentation](https://n-at-han-k.github.io/string_builder/) for more details.
