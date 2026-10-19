@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require_relative 'string_builder/version'
 require_relative 'string_builder/concat/default'
+require_relative "string_builder/version"
 
 class StringBuilder
   include Enumerable
